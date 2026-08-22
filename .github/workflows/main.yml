@@ -5,16 +5,21 @@ on:
 
 jobs:
   build:
+
     runs-on: ubuntu-22.04
 
     steps:
 
+    # 拉取你的仓库
     - name: Checkout
       uses: actions/checkout@v4
 
+
+    # 编译环境
     - name: Install dependencies
       run: |
         sudo apt update
+
         sudo apt install -y \
           bc \
           bison \
@@ -24,27 +29,99 @@ jobs:
           curl \
           git \
           zip \
+          unzip \
           python3 \
           cpio \
           device-tree-compiler \
           libssl-dev \
           libelf-dev \
-          gcc-aarch64-linux-gnu
+          gcc-aarch64-linux-gnu \
+          wget
 
+
+    # ccache
+    - name: Setup ccache
+      run: |
+        ccache -M 5G
+
+
+    # 下载 clang
+    #
+    # 4.9 Qualcomm 内核不要使用 LLVM=1
+    # 由 build.sh 调用 clang
+    #
     - name: Download clang
       run: |
-        mkdir clang
-        cd clang
-        wget https://github.com/kdrag0n/proton-clang/releases/download/20210505/proton-clang.tar.gz
-        tar xf proton-clang.tar.gz
+        mkdir -p clang
 
+        cd clang
+
+        wget -q \
+        https://github.com/ZyCromerZ/Clang/releases/download/19.0.0/Clang-19.0.0.tar.gz
+
+        tar xf Clang-19.0.0.tar.gz
+
+        cd ..
+
+
+    # 编译内核
     - name: Build kernel
       run: |
-        chmod +x build.sh
-        CLANG_DIR=$GITHUB_WORKSPACE/clang ./build.sh
 
+        chmod +x build.sh
+
+        CLANG_DIR=$GITHUB_WORKSPACE/clang \
+        ./build.sh
+
+
+    # 检查输出
+    - name: Verify kernel
+      run: |
+
+        ls -lh \
+        kernel/out/arch/arm64/boot/Image.gz-dtb
+
+
+
+    # 上传原始kernel
     - name: Upload Image.gz-dtb
       uses: actions/upload-artifact@v4
+
       with:
-        name: Image.gz-dtb
-        path: kernel/out/arch/arm64/boot/Image.gz-dtb
+
+        name: OnePlus6-Image.gz-dtb
+
+        path:
+
+          kernel/out/arch/arm64/boot/Image.gz-dtb
+
+
+
+    # 制作AnyKernel刷机包
+    - name: Build AnyKernel3 zip
+      run: |
+
+        cp \
+        kernel/out/arch/arm64/boot/Image.gz-dtb \
+        anykernel/
+
+
+        cd anykernel
+
+
+        zip -r \
+        ../ReSukiSU-OnePlus6.zip \
+        *
+
+
+    # 上传刷机包
+    - name: Upload flashable zip
+      uses: actions/upload-artifact@v4
+
+      with:
+
+        name: ReSukiSU-OnePlus6-flashable
+
+        path:
+
+          ReSukiSU-OnePlus6.zip
