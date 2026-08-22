@@ -2,6 +2,7 @@ name: Build OnePlus6 ReSukiSU Kernel
 
 
 on:
+
   workflow_dispatch:
 
 
@@ -15,20 +16,14 @@ jobs:
     steps:
 
 
-    # =========================
-    # 拉取源码
-    # =========================
-
     - name: Checkout
-      uses: actions/checkout@v5
+
+      uses: actions/checkout@v4
 
 
-
-    # =========================
-    # 编译依赖
-    # =========================
 
     - name: Install dependencies
+
       run: |
 
         sudo apt update
@@ -42,174 +37,113 @@ jobs:
           curl \
           git \
           zip \
-          unzip \
           python3 \
           cpio \
           device-tree-compiler \
           libssl-dev \
           libelf-dev \
           gcc-aarch64-linux-gnu \
-          wget
+          wget \
+          zstd
 
 
 
-    # =========================
-    # ccache
-    # =========================
+    #
+    # Download clang
+    #
 
-    - name: Setup ccache
-      run: |
+    - name: Download Neutron Clang
 
-        ccache -M 5G
-
-
-
-    # =========================
-    # 下载 clang
-    # =========================
-
-    - name: Download clang
       run: |
 
         mkdir -p clang
 
+
         cd clang
 
 
-        wget \
-        https://github.com/kdrag0n/proton-clang/releases/download/20210505/proton-clang.tar.gz
+        git clone \
+        --depth=1 \
+        -b Neutron-16 \
+        https://gitlab.com/RyuujiX/neutron-clang.git .
 
 
-        tar xf proton-clang.tar.gz
+        echo "=============================="
+
+        echo "clang check"
+
+        echo "=============================="
 
 
-        cd ..
+        ./bin/clang --version
 
 
 
-    # =========================
-    # 编译前检查
-    # =========================
+    #
+    # Build
+    #
 
-    - name: Prepare build script
+    - name: Build kernel
+
       run: |
 
         chmod +x build.sh
 
-
-
-    # =========================
-    # 编译
-    # =========================
-
-    - name: Build kernel
-      run: |
 
         CLANG_DIR=$GITHUB_WORKSPACE/clang \
         ./build.sh
 
 
 
-    # =========================
-    # 检查生成内核
-    # =========================
+    #
+    # Build check
+    #
 
-    - name: Verify kernel output
+    - name: Check kernel output
+
       run: |
 
-        echo "===== Kernel output ====="
 
-        ls -lh \
-        kernel/out/arch/arm64/boot/Image.gz-dtb
+        echo "=============================="
 
+        echo "Checking output"
 
-
-    # =========================
-    # 检查最终 config
-    # =========================
-
-    - name: Check Docker LXC support
-      run: |
-
-        echo "===== Checking kernel config ====="
+        echo "=============================="
 
 
-        grep -E \
-        "CONFIG_(UTS_NS|IPC_NS|PID_NS|NET_NS|USER_NS|MEMCG|CGROUP_DEVICE|CGROUP_NET_PRIO|VETH|SECCOMP_FILTER)" \
-        kernel/out/.config || true
+        ls -lh kernel/out/arch/arm64/boot/
 
 
+        if [ ! -f kernel/out/arch/arm64/boot/Image.gz-dtb ]
 
-    # =========================
-    # 检查 ReSukiSU
-    # =========================
+        then
 
-    - name: Check ReSukiSU
-      run: |
+          echo "Image.gz-dtb NOT FOUND"
 
-        echo "===== Checking KernelSU ====="
+          exit 1
+
+        fi
 
 
-        grep -E \
-        "CONFIG_KSU|CONFIG_KSU_MANUAL_HOOK" \
-        kernel/out/.config || true
+        echo "Kernel build success"
 
 
 
-    # =========================
-    # 上传原始kernel
-    # =========================
+    #
+    # Upload
+    #
 
-    - name: Upload Image.gz-dtb
+    - name: Upload Kernel
+
       uses: actions/upload-artifact@v4
+
 
       with:
 
-        name: OnePlus6-ReSukiSU-Image
+
+        name: OnePlus6-ReSukiSU-Image.gz-dtb
+
 
         path:
 
           kernel/out/arch/arm64/boot/Image.gz-dtb
-
-
-
-    # =========================
-    # 制作 AnyKernel 刷机包
-    # =========================
-
-    - name: Build AnyKernel zip
-      run: |
-
-
-        cp \
-        kernel/out/arch/arm64/boot/Image.gz-dtb \
-        anykernel/
-
-
-        cd anykernel
-
-
-        zip -r \
-        ../OnePlus6-ReSukiSU-Kernel.zip \
-        *
-
-
-
-    # =========================
-    # 上传刷机包
-    # =========================
-
-    - name: Upload flashable zip
-      uses: actions/upload-artifact@v4
-
-
-      with:
-
-        name:
-
-          OnePlus6-ReSukiSU-flashable
-
-
-        path:
-
-          OnePlus6-ReSukiSU-Kernel.zip
