@@ -41,32 +41,39 @@ ROM      : LineageOS 22.2 / Android 15
 
 ## 📥 刷机安装
 
-刷机前请先备份 boot 分区。一加 6 在 LineageOS 22 上采用 recovery-in-boot,坏内核会同时破坏 recovery。请在电脑上保留可用的 boot.img,以便随时通过 fastboot flash boot 恢复。
+> ⚠️ **注意：此 TWRP 不支持解密加密存储**，但仍可正常刷入内核 zip。刷入前请备份重要数据，或先在系统设置中关闭加密（FBE）。
+
+刷机前请先备份 boot 分区。一加 6 在 LineageOS 22 上采用 recovery-in-boot，坏内核会同时破坏 recovery。请在电脑上保留可用的 boot.img，以便随时通过 fastboot flash boot 恢复。
 
 ```
 adb shell su -c "dd if=/dev/block/bootdevice/by-name/boot of=/sdcard/boot-backup.img"
 adb pull /sdcard/boot-backup.img
 ```
 
-请使用通过 fastboot 临时引导的 TWRP 刷入,这样不会写入 recovery/boot 分区。
+请使用通过 fastboot 临时引导的 TWRP 刷入，这样不会写入 recovery/boot 分区。
 
-1. 从 [Releases](../../releases) 下载最新的 ReSukiSU-OP6-enchilada-*.zip,以及 enchilada 的 TWRP 镜像 twrp-*-enchilada.img。
-2. 重启到 bootloader:`adb reboot bootloader`。
-3. 临时引导 TWRP,不要刷入:
-   ```
-   fastboot boot twrp-x.x.x-x-enchilada.img
-   ```
-4. 在 TWRP 中进入 高级 → ADB Sideload,然后在电脑上执行:
-   ```
-   adb sideload ReSukiSU-OP6-enchilada-4.9-v3-VoL-YYYYMMDD.zip
-   ```
-   若 TWRP 能读取存储,也可直接安装该 zip。
-5. 重启进入系统。
-6. 打开 ReSukiSU 管理器,应显示已安装,内核为 4.9.337-byVoLResukisu。Root 已在内核中,请勿点击 App 内的安装或刷入按钮。
+### 下载文件
 
-请勿在 TWRP 内点击 安装 TWRP、Flash Current TWRP 或 Install Recovery Ramdisk。在 recovery-in-boot 设备上,这会把 TWRP 写入 boot 并导致循环进入 TWRP。请始终通过 fastboot boot 临时使用 TWRP。
+从 [Releases](../../releases) 下载以下两个文件：
 
-如无法开机,重启到 bootloader 并执行 fastboot flash boot boot-backup.img。
+1. **内核包**：`ReSukiSU-OP6-Docker-CGROUP-v1.zip`
+2. **TWRP**：[`twrp-3.7.0_11-0-enchilada.img`](https://github.com/wuxietianzhen/OnePlus6-ReSukiSU-Kernel/releases/download/v4.2.0-rc2-docker-cg-v1/twrp-3.7.0_11-0-enchilada.img)
+
+### 刷入步骤
+
+1. 手机重启到 bootloader：`adb reboot bootloader`
+2. 临时引导 TWRP（**不要刷入**）：
+   ```
+   fastboot boot twrp-3.7.0_11-0-enchilada.img
+   ```
+3. TWRP 启动后，点击 **Install**，选择 `ReSukiSU-OP6-Docker-CGROUP-v1.zip`
+4. 滑动确认刷入，等待完成
+5. 点击 **Reboot System**
+6. 进入系统后打开 ReSukiSU 管理器，应显示已安装
+
+> ⚠️ **不要在 TWRP 内点击「安装 TWRP」「Flash Current TWRP」或「Install Recovery Ramdisk」**。在 recovery-in-boot 设备上，这会把 TWRP 写入 boot 并导致循环进入 TWRP。请始终通过 `fastboot boot` 临时使用 TWRP。
+
+如无法开机，重启到 bootloader 并执行 `fastboot flash boot boot-backup.img` 恢复。
 
 ---
 
