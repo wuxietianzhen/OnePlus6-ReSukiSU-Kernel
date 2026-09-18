@@ -17,7 +17,7 @@ ROM      : LineageOS 22.2 / Android 15
 
 ## ✨ 特性
 
-- ReSukiSU Root,手动 hook,内置于内核,仅 ReSukiSU 管理器。
+- ReSukiSU Root,手动 hook,内置于内核,仅 ReSukiSU 管理器。**已更新至最新版 6ec8d9a8。**
 - 仅信任 ReSukiSU 管理器,已关闭多管理器支持。
 - 默认启用 TCP BBR 拥塞控制与 fq 队列规则。
 - 默认采用 schedutil EAS 调速器,关闭 SCHEDSTATS,保留原版 EAS/WALT 调校。
@@ -26,7 +26,16 @@ ROM      : LineageOS 22.2 / Android 15
 - 内置 ReSukiSU selinux_hide,可在管理器中开启,默认关闭。无 SUSFS 时仅隐藏 SELinux 状态,不隐藏文件与挂载。
 - 使用 Neutron Clang 与 GNU binutils 构建。
 
-当前版本 v3,不含 SUSFS 与 KPM。
+### 🐳 Droidspaces / Docker 支持（本次新增）
+
+- 完整容器支持：namespaces（PID/UTS/IPC/NET/USER/MNT）、cgroup v1（device/pids/sched/freezer/net_prio/memcg/blkio）、overlay2、seccomp。
+- 网络栈：VETH、bridge、netfilter、NAT、MASQUERADE、conntrack、ebtables 全套，适配 Droidspaces host 网络模式。
+- **cgroup noprefix 补丁**：在 `cgroup_add_file` 中为 noprefix 挂载的 cgroup 自动创建带前缀 symlink（如 `cpuset.cpus → cpus`），解决 4.9 内核 Android noprefix 挂载下 runc 找不到 cpuset.cpus 的问题。
+- 关闭 `ANDROID_PARANOID_NETWORK`，容器内可正常联网。
+- 保留 BPF_JIT / CGROUP_BPF = y（Android 15 必需），不启用 BPF_JIT_ALWAYS_ON（避免 boot loop）。
+- 已验证：Droidspaces + Docker 26.x + Portainer 正常运行。
+
+当前版本 v4.2.0-rc2,不含 SUSFS 与 KPM。
 
 ---
 
