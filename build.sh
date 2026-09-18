@@ -16,7 +16,7 @@ KERNEL_REPO="https://github.com/LineageOS/android_kernel_oneplus_sdm845"
 KERNEL_BRANCH="lineage-22.2"
 KERNEL_COMMIT="2e921a892c03b8a17b4d82e9b24c2b3aa775c870"
 RESUKISU_SETUP="https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh"
-RESUKISU_REF="a4f7744c"   # ReSukiSU v4.1.0-… used for v3
+RESUKISU_REF="6ec8d9a8"   # ReSukiSU v4.1.0-… used for v3
 
 # ---- paths (edit CLANG_DIR to your toolchain) ----
 ROOT="$(pwd)"
@@ -47,6 +47,7 @@ cd "$KSRC"
 # 3. patches
 git apply "$ROOT/patches/0001-resukisu-manual-hooks.patch" || true
 git apply "$ROOT/patches/0002-enchilada-defconfig.patch"   || true
+git apply $ROOT/patches/0003-enchilada-docker.patch   || true
 cp "$ROOT/patches/set_memory.h" arch/arm64/include/asm/set_memory.h
 
 # 4. build
